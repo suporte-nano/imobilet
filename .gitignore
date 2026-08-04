@@ -1,0 +1,57 @@
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+secrets/
+credentials/
+**/service-account*.json
+
+# Supabase local state and credentials
+.supabase/
+supabase/.temp/
+supabase/.branches/
+supabase/.env
+supabase/.env.*
+**/supabase-service-role*
+**/service-role*
+**/service_role*
+
+# Database dumps, backups, and customer data exports
+*.sql
+*.dump
+*.backup
+*.bak
+*.sqlite
+*.sqlite3
+*.db
+backups/
+dumps/
+exports/
+customer-data/
+client-data/
+dados-clientes/
+dados_sensiveis/
+
+# Logs and temporary files
+*.log
+logs/
+tmp/
+temp/
+.cache/
+.DS_Store
+Thumbs.db
+
+# Dependencies and build outputs
+node_modules/
+dist/
+build/
+coverage/
+.next/
+out/
+.vite/
