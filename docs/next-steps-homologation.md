@@ -43,6 +43,7 @@ Antes de aplicar qualquer SQL em producao:
    - registrar pagamento parcial;
    - registrar quitacao;
    - validar historico de pagamentos.
+10. Rodar `docs/supabase-receivables-postflight.sql` para conferir tabelas, colunas, RLS, grants, policies, funcoes e FKs criadas.
 
 ## 3. Banco do Brasil
 
