@@ -24,6 +24,7 @@ npm run build
 
 Antes de aplicar qualquer SQL em producao:
 
+0. Rodar `docs/supabase-receivables-preflight.sql` no SQL Editor do projeto de teste e salvar apenas os achados tecnicos, sem exportar dados de clientes.
 1. Conferir se as tabelas existentes possuem os nomes esperados:
    - `properties`
    - `buyers`
