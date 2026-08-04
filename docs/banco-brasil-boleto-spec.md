@@ -66,6 +66,14 @@ Funções puras adicionadas:
 - `buildLinhaDigitavel`
 - `buildBancoBrasilBoletoIdentifiers`
 
+Validação local:
+
+```bash
+npm run validate:bb-boleto
+```
+
+Esse comando confere os fatores de vencimento de referência, o DV geral e a linha digitável do exemplo técnico do BB, além de validar o formato de um identificador gerado com dados fictícios.
+
 ## Dados ainda necessários da Lotes & Terrenos / Banco do Brasil
 
 - número do convênio;

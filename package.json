@@ -7,7 +7,8 @@
     "dev": "vite --host :: --port 3000",
     "build": "node tools/generate-llms.js || true && vite build",
     "preview": "vite preview --host :: --port 3000",
-    "lint": "eslint . --quiet"
+    "lint": "eslint . --quiet",
+    "validate:bb-boleto": "node tools/validate-banco-brasil-boleto.js"
   },
   "dependencies": {
     "@babel/generator": "^7.26.3",
