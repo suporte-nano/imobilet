@@ -1,0 +1,208 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+    --primary: 160 84% 39%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 160 84% 39%;
+    --radius: 0.5rem;
+    
+    /* Warning colors for upcoming expenses */
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    --warning-light: 45 93% 90%;
+    
+    /* Payable accounts table colors */
+    --table-header-bg: 160 84% 39%;
+    --table-header-text: 0 0% 100%;
+    --table-row-even: 0 0% 100%;
+    --table-row-odd: 240 4.8% 95.9%;
+    --table-row-hover: 240 4.8% 95.9%;
+    --table-border: 240 5.9% 90%;
+    --action-edit: 217 91% 60%;
+    --action-delete: 0 84.2% 60.2%;
+    --amount-text: 0 84.2% 60.2%;
+    
+    /* Financial summary card colors */
+    --financial-unpaid: 0 84.2% 60.2%;
+    --financial-paid: 160 84% 39%;
+    --financial-overdue: 0 84.2% 60.2%;
+    --financial-upcoming: 38 92% 50%;
+  }
+
+  .dark {
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 160 84% 39%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 160 84% 39%;
+    
+    /* Warning colors for upcoming expenses - dark mode */
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    --warning-light: 38 80% 20%;
+    
+    /* Payable accounts table colors - dark mode */
+    --table-header-bg: 160 84% 39%;
+    --table-header-text: 0 0% 100%;
+    --table-row-even: 240 10% 3.9%;
+    --table-row-odd: 240 3.7% 15.9%;
+    --table-row-hover: 240 3.7% 20%;
+    --table-border: 240 3.7% 15.9%;
+    --action-edit: 217 91% 60%;
+    --action-delete: 0 84.2% 60.2%;
+    --amount-text: 0 84.2% 60.2%;
+    
+    /* Financial summary card colors - dark mode */
+    --financial-unpaid: 0 84.2% 60.2%;
+    --financial-paid: 160 84% 39%;
+    --financial-overdue: 0 84.2% 60.2%;
+    --financial-upcoming: 38 92% 50%;
+  }
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Responsive table scrolling for mobile */
+@media (max-width: 768px) {
+  .overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  table {
+    min-width: 800px;
+  }
+}
+
+/* Table styling enhancements */
+table thead {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+table tbody tr {
+  transition: background-color 0.2s ease;
+}
+
+/* Input text visibility */
+input[type="text"],
+input[type="email"],
+input[type="number"],
+input[type="date"],
+textarea,
+select {
+  color: #111827;
+}
+
+.dark input[type="text"],
+.dark input[type="email"],
+.dark input[type="number"],
+.dark input[type="date"],
+.dark textarea,
+.dark select {
+  color: #f9fafb;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #9ca3af;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #6b7280;
+}
+
+/* Financial summary card enhancements */
+.financial-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.financial-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.financial-card-clickable {
+  cursor: pointer;
+}
+
+.financial-card-clickable:active {
+  transform: translateY(-2px);
+}
+
+/* Financial badge styling */
+.financial-badge-warning {
+  background-color: hsl(var(--financial-upcoming));
+  color: white;
+  font-weight: 700;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Ensure proper contrast for financial cards */
+.financial-card .card-gradient-red {
+  background: linear-gradient(to bottom right, hsl(0, 84%, 60%), hsl(0, 72%, 50%));
+}
+
+.financial-card .card-gradient-green {
+  background: linear-gradient(to bottom right, hsl(160, 84%, 39%), hsl(173, 80%, 40%));
+}
+
+.financial-card .card-gradient-amber {
+  background: linear-gradient(to bottom right, hsl(38, 92%, 50%), hsl(25, 95%, 53%));
+}

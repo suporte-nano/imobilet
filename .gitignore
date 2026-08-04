@@ -24,6 +24,7 @@ supabase/.env.*
 
 # Database dumps, backups, and customer data exports
 *.sql
+!docs/supabase-receivables-schema.sql
 *.dump
 *.backup
 *.bak

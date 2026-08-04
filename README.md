@@ -26,16 +26,23 @@ Consulte [SECURITY.md](SECURITY.md) antes de enviar alterações.
 
 ## Configuração
 
-As credenciais devem ser configuradas diretamente nas variáveis de ambiente das plataformas autorizadas. Quando o código-fonte for adicionado, documente apenas os nomes das variáveis necessárias, usando valores fictícios em um arquivo `.env.example`.
+As credenciais devem ser configuradas diretamente nas variáveis de ambiente das plataformas autorizadas. Documente apenas os nomes das variáveis necessárias, usando valores fictícios em `.env.example`.
 
 ## Supabase
 
 Todas as tabelas expostas pela Data API devem usar **Row Level Security (RLS)** e políticas de acesso adequadas. A chave secreta ou `service_role` nunca deve ser usada no cliente.
 
+O módulo de recebimento de parcelas possui uma proposta de schema em [docs/supabase-receivables-schema.sql](docs/supabase-receivables-schema.sql). Revise o schema real, relações e RLS antes de aplicar em produção.
+
 ## Desenvolvimento
 
-O código exportado da Hostinger Horizons será incorporado ao repositório em uma próxima etapa. Depois disso, esta seção deverá incluir os comandos reais de instalação, desenvolvimento, testes e build.
+```powershell
+npm.cmd install
+npm.cmd run dev
+npm.cmd run build
+npm.cmd run lint
+```
 
 ## Status
 
-Configuração inicial do repositório em andamento.
+Projeto em integração a partir do export da Hostinger Horizons.
