@@ -161,6 +161,16 @@ begin
 end;
 $$;
 
+revoke all on function public.set_updated_at() from public;
+revoke all on function public.generate_installments_for_contract(uuid) from public;
+revoke all on function public.refresh_overdue_installments() from public;
+revoke all on function public.set_updated_at() from anon;
+revoke all on function public.generate_installments_for_contract(uuid) from anon;
+revoke all on function public.refresh_overdue_installments() from anon;
+
+grant execute on function public.generate_installments_for_contract(uuid) to authenticated;
+grant execute on function public.refresh_overdue_installments() to authenticated;
+
 alter table public.sales_contracts enable row level security;
 alter table public.installments enable row level security;
 alter table public.payments enable row level security;
@@ -174,13 +184,13 @@ create policy "Authenticated users can read sales contracts"
 create policy "Authenticated users can insert sales contracts"
   on public.sales_contracts for insert
   to authenticated
-  with check (auth.uid() = created_by);
+  with check ((select auth.uid()) = created_by);
 
 create policy "Creators can update sales contracts"
   on public.sales_contracts for update
   to authenticated
-  using (auth.uid() = created_by)
-  with check (auth.uid() = created_by);
+  using ((select auth.uid()) = created_by)
+  with check ((select auth.uid()) = created_by);
 
 create policy "Authenticated users can read installments"
   on public.installments for select
@@ -200,7 +210,7 @@ create policy "Authenticated users can insert installments for own contracts"
     exists (
       select 1 from public.sales_contracts c
       where c.id = installments.contract_id
-        and c.created_by = auth.uid()
+        and c.created_by = (select auth.uid())
     )
   );
 
@@ -211,14 +221,14 @@ create policy "Authenticated users can update installments for own contracts"
     exists (
       select 1 from public.sales_contracts c
       where c.id = installments.contract_id
-        and c.created_by = auth.uid()
+        and c.created_by = (select auth.uid())
     )
   )
   with check (
     exists (
       select 1 from public.sales_contracts c
       where c.id = installments.contract_id
-        and c.created_by = auth.uid()
+        and c.created_by = (select auth.uid())
     )
   );
 
@@ -236,7 +246,17 @@ create policy "Authenticated users can read payments"
 create policy "Authenticated users can insert payments"
   on public.payments for insert
   to authenticated
-  with check (auth.uid() = created_by);
+  with check (
+    (select auth.uid()) = created_by
+    and exists (
+      select 1
+      from public.sales_contracts c
+      join public.installments i on i.contract_id = c.id
+      where c.id = payments.contract_id
+        and i.id = payments.installment_id
+        and c.created_by = (select auth.uid())
+    )
+  );
 
 create policy "Authenticated users can read audit logs"
   on public.financial_audit_logs for select
@@ -246,7 +266,7 @@ create policy "Authenticated users can read audit logs"
 create policy "Authenticated users can insert audit logs"
   on public.financial_audit_logs for insert
   to authenticated
-  with check (auth.uid() = created_by);
+  with check ((select auth.uid()) = created_by);
 
 -- Estrutura reservada para integração futura, sem emissão real nesta etapa:
 -- payments.payment_method = 'bank_slip' pode representar boleto manual.

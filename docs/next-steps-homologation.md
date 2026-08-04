@@ -32,8 +32,10 @@ Antes de aplicar qualquer SQL em producao:
 3. Revisar `docs/supabase-receivables-schema.sql` linha a linha no SQL Editor de um projeto de teste.
 4. Confirmar que todas as novas tabelas tem RLS ativo.
 5. Confirmar que as policies usam `TO authenticated` com predicados de ownership, e nao `service_role` no front-end.
-6. Confirmar que as novas tabelas estao expostas para a Data API apenas com `GRANT` adequado para `authenticated`.
-7. Testar com usuario comum autenticado:
+6. Confirmar que `payments` so permite inserir pagamentos em parcelas pertencentes a contratos do usuario autenticado.
+7. Confirmar que funcoes publicas tem `EXECUTE` revogado de `public`/`anon` e liberado apenas quando necessario.
+8. Confirmar que as novas tabelas estao expostas para a Data API apenas com `GRANT` adequado para `authenticated`.
+9. Testar com usuario comum autenticado:
    - criar contrato;
    - gerar parcelas;
    - listar contas a receber;
