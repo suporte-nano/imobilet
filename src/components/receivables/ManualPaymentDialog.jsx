@@ -13,10 +13,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
-import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { supabase } from '@/lib/customSupabaseClient';
 import {
-  deriveInstallmentStatus,
   formatCurrency,
   getTodayISO,
   paymentMethodLabels,
@@ -26,7 +24,6 @@ const paymentMethods = Object.entries(paymentMethodLabels);
 
 const ManualPaymentDialog = ({ open, onOpenChange, installment, contractId, onPaymentSaved }) => {
   const { toast } = useToast();
-  const { user } = useAuth();
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
     payment_date: getTodayISO(),
@@ -72,54 +69,30 @@ const ManualPaymentDialog = ({ open, onOpenChange, installment, contractId, onPa
       toast({ variant: 'destructive', title: 'Informe um valor de pagamento válido.' });
       return;
     }
+    if (paidAmount > Number(installment.balance || 0)) {
+      toast({ variant: 'destructive', title: 'O pagamento não pode ser maior que o saldo da parcela.' });
+      return;
+    }
+
+    const receiptPath = formData.receipt_path.trim();
+    if (/^https?:\/\//i.test(receiptPath)) {
+      toast({ variant: 'destructive', title: 'Não informe URL pública para comprovantes.' });
+      return;
+    }
 
     try {
       setSaving(true);
 
-      const paymentPayload = {
-        installment_id: installment.id,
-        contract_id: contractId,
-        payment_date: formData.payment_date,
-        paid_amount: paidAmount,
-        payment_method: formData.payment_method,
-        receipt_path: formData.receipt_path.trim() || null,
-        notes: formData.notes.trim() || null,
-        created_by: user?.id || null,
-      };
-
-      const { error: paymentError } = await supabase
-        .from('payments')
-        .insert([paymentPayload]);
+      const { error: paymentError } = await supabase.rpc('register_manual_installment_payment', {
+        installment_uuid: installment.id,
+        payment_date_value: formData.payment_date,
+        paid_amount_value: paidAmount,
+        payment_method_value: formData.payment_method,
+        receipt_path_value: receiptPath || null,
+        notes_value: formData.notes.trim() || null,
+      });
 
       if (paymentError) throw paymentError;
-
-      const nextStatus = deriveInstallmentStatus(installment, projected.nextPaid);
-      const { error: installmentError } = await supabase
-        .from('installments')
-        .update({
-          paid_amount: projected.nextPaid,
-          balance: projected.nextBalance,
-          status: nextStatus,
-          paid_at: nextStatus === 'paid' ? formData.payment_date : null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', installment.id);
-
-      if (installmentError) throw installmentError;
-
-      await supabase.from('financial_audit_logs').insert([{
-        entity_type: 'installment',
-        entity_id: installment.id,
-        action: 'manual_payment_registered',
-        description: `Pagamento manual registrado na parcela ${installment.installment_number}.`,
-        metadata: {
-          contract_id: contractId,
-          paid_amount: paidAmount,
-          payment_method: formData.payment_method,
-          new_status: nextStatus,
-        },
-        created_by: user?.id || null,
-      }]);
 
       toast({
         title: 'Pagamento registrado',

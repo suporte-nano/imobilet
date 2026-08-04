@@ -22,6 +22,7 @@ import { useToast } from '@/components/ui/use-toast';
 import ManualPaymentDialog from '@/components/receivables/ManualPaymentDialog';
 import {
   contractStatusLabels,
+  calculateInstallmentStatus,
   formatCurrency,
   formatDate,
   getInstallmentBadgeClass,
@@ -51,7 +52,7 @@ const SalesContractDetails = () => {
         .select(`
           *,
           property:properties(id, title, code, custom_id, status, block, fraction, price),
-          buyer:buyers(id, full_name, name, email, phone),
+          buyer:buyers(id, full_name, name),
           installments(*),
           payments(*)
         `)
@@ -69,7 +70,17 @@ const SalesContractDetails = () => {
 
       setContract({
         ...data,
-        installments: (data.installments || []).sort((a, b) => Number(a.installment_number) - Number(b.installment_number)),
+        installments: (data.installments || [])
+          .map((installment) => ({
+            ...installment,
+            effective_status: calculateInstallmentStatus({
+              balance: installment.balance,
+              paidAmount: installment.paid_amount,
+              dueDate: installment.due_date,
+              currentStatus: installment.status,
+            }),
+          }))
+          .sort((a, b) => Number(a.installment_number) - Number(b.installment_number)),
         payments: (data.payments || []).sort((a, b) => String(b.payment_date || '').localeCompare(String(a.payment_date || ''))),
       });
     } catch (error) {
@@ -94,7 +105,8 @@ const SalesContractDetails = () => {
       acc.adjusted += Number(item.adjusted_amount || 0);
       acc.paid += Number(item.paid_amount || 0);
       acc.balance += Number(item.balance || 0);
-      if (item.status === 'overdue') acc.overdue += Number(item.balance || 0);
+      const status = item.effective_status || item.status;
+      if (status === 'overdue') acc.overdue += Number(item.balance || 0);
       return acc;
     }, {
       original: 0,
@@ -188,7 +200,7 @@ const SalesContractDetails = () => {
                   </h2>
                   <p className="text-lg font-semibold text-slate-900">{safeBuyerName(contract.buyer)}</p>
                   <p className="text-sm text-slate-500 mt-1">
-                    {contract.buyer?.email || 'Email não informado'} · {contract.buyer?.phone || 'Telefone não informado'}
+                    Dados de contato não exibidos neste módulo financeiro.
                   </p>
                 </section>
 
@@ -255,8 +267,8 @@ const SalesContractDetails = () => {
                           <td className="px-5 py-4 text-emerald-700 font-semibold">{formatCurrency(item.paid_amount)}</td>
                           <td className="px-5 py-4 text-slate-950 font-bold">{formatCurrency(item.balance)}</td>
                           <td className="px-5 py-4">
-                            <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${getInstallmentBadgeClass(item.status)}`}>
-                              {installmentStatusLabels[item.status] || item.status}
+                            <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${getInstallmentBadgeClass(item.effective_status)}`}>
+                              {installmentStatusLabels[item.effective_status] || item.effective_status}
                             </span>
                           </td>
                           <td className="px-5 py-4 text-right">

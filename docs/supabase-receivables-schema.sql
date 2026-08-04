@@ -161,15 +161,144 @@ begin
 end;
 $$;
 
+create or replace function public.register_manual_installment_payment(
+  installment_uuid uuid,
+  payment_date_value date,
+  paid_amount_value numeric,
+  payment_method_value text,
+  receipt_path_value text default null,
+  notes_value text default null
+)
+returns table (
+  payment_id uuid,
+  next_paid_amount numeric,
+  next_balance numeric,
+  next_status text
+)
+language plpgsql
+security invoker
+as $$
+declare
+  installment_row public.installments%rowtype;
+  contract_uuid uuid;
+begin
+  if (select auth.uid()) is null then
+    raise exception 'Usuário autenticado é obrigatório';
+  end if;
+
+  if paid_amount_value <= 0 then
+    raise exception 'Valor de pagamento inválido';
+  end if;
+
+  if payment_method_value not in ('cash', 'pix', 'bank_transfer', 'bank_slip', 'credit_card', 'debit_card', 'other') then
+    raise exception 'Forma de pagamento inválida';
+  end if;
+
+  if receipt_path_value ~* '^https?://' then
+    raise exception 'URL pública não é permitida para comprovantes';
+  end if;
+
+  select i.* into installment_row
+  from public.installments i
+  where i.id = installment_uuid
+  for update;
+
+  if not found then
+    raise exception 'Parcela não encontrada';
+  end if;
+
+  if installment_row.status in ('paid', 'cancelled', 'renegotiated') then
+    raise exception 'Parcela não permite novo pagamento';
+  end if;
+
+  if paid_amount_value > installment_row.balance then
+    raise exception 'Pagamento maior que o saldo da parcela';
+  end if;
+
+  contract_uuid := installment_row.contract_id;
+  next_paid_amount := installment_row.paid_amount + paid_amount_value;
+  next_balance := greatest(installment_row.adjusted_amount - next_paid_amount, 0);
+
+  if next_balance <= 0 then
+    next_status := 'paid';
+  elsif next_paid_amount > 0 then
+    next_status := 'partial';
+  elsif installment_row.due_date < current_date then
+    next_status := 'overdue';
+  else
+    next_status := 'open';
+  end if;
+
+  insert into public.payments (
+    installment_id,
+    contract_id,
+    payment_date,
+    paid_amount,
+    payment_method,
+    receipt_path,
+    notes,
+    created_by
+  )
+  values (
+    installment_uuid,
+    contract_uuid,
+    payment_date_value,
+    paid_amount_value,
+    payment_method_value,
+    nullif(trim(receipt_path_value), ''),
+    nullif(trim(notes_value), ''),
+    (select auth.uid())
+  )
+  returning id into payment_id;
+
+  update public.installments
+  set
+    paid_amount = next_paid_amount,
+    balance = next_balance,
+    status = next_status,
+    paid_at = case when next_status = 'paid' then payment_date_value else null end,
+    updated_at = now()
+  where id = installment_uuid;
+
+  insert into public.financial_audit_logs (
+    entity_type,
+    entity_id,
+    action,
+    description,
+    metadata,
+    created_by
+  )
+  values (
+    'installment',
+    installment_uuid,
+    'manual_payment_registered',
+    'Pagamento manual registrado em transação de baixa de parcela.',
+    jsonb_build_object(
+      'contract_id', contract_uuid,
+      'payment_id', payment_id,
+      'paid_amount', paid_amount_value,
+      'payment_method', payment_method_value,
+      'new_status', next_status
+    ),
+    (select auth.uid())
+  );
+
+  return next;
+end;
+$$;
+
 revoke all on function public.set_updated_at() from public;
 revoke all on function public.generate_installments_for_contract(uuid) from public;
 revoke all on function public.refresh_overdue_installments() from public;
+revoke all on function public.register_manual_installment_payment(uuid, date, numeric, text, text, text) from public;
 revoke all on function public.set_updated_at() from anon;
 revoke all on function public.generate_installments_for_contract(uuid) from anon;
 revoke all on function public.refresh_overdue_installments() from anon;
+revoke all on function public.register_manual_installment_payment(uuid, date, numeric, text, text, text) from anon;
 
 grant execute on function public.generate_installments_for_contract(uuid) to authenticated;
 grant execute on function public.refresh_overdue_installments() to authenticated;
+grant execute on function public.register_manual_installment_payment(uuid, date, numeric, text, text, text) to authenticated;
 
 alter table public.sales_contracts enable row level security;
 alter table public.installments enable row level security;
@@ -184,13 +313,29 @@ create policy "Authenticated users can read sales contracts"
 create policy "Authenticated users can insert sales contracts"
   on public.sales_contracts for insert
   to authenticated
-  with check ((select auth.uid()) = created_by);
+  with check (
+    (select auth.uid()) = created_by
+    and exists (
+      select 1
+      from public.buyers b
+      where b.id = sales_contracts.buyer_id
+        and b.property_id = sales_contracts.property_id
+    )
+  );
 
 create policy "Creators can update sales contracts"
   on public.sales_contracts for update
   to authenticated
   using ((select auth.uid()) = created_by)
-  with check ((select auth.uid()) = created_by);
+  with check (
+    (select auth.uid()) = created_by
+    and exists (
+      select 1
+      from public.buyers b
+      where b.id = sales_contracts.buyer_id
+        and b.property_id = sales_contracts.property_id
+    )
+  );
 
 create policy "Authenticated users can read installments"
   on public.installments for select

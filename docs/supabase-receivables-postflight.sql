@@ -135,6 +135,7 @@ from (
   values
     ('set_updated_at', ''),
     ('generate_installments_for_contract', 'contract_uuid uuid'),
+    ('register_manual_installment_payment', 'installment_uuid uuid, payment_date_value date, paid_amount_value numeric, payment_method_value text, receipt_path_value text, notes_value text'),
     ('refresh_overdue_installments', '')
 ) as expected(function_name, arguments)
 left join pg_namespace n
@@ -155,6 +156,7 @@ where routine_schema = 'public'
   and routine_name in (
     'set_updated_at',
     'generate_installments_for_contract',
+    'register_manual_installment_payment',
     'refresh_overdue_installments'
   )
   and grantee in ('anon', 'authenticated', 'public')

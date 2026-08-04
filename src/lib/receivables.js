@@ -133,7 +133,6 @@ export const safeBuyerName = (buyer) => (
   || buyer?.name
   || buyer?.buyer_name
   || buyer?.nome
-  || buyer?.email
   || 'Comprador não informado'
 );
 

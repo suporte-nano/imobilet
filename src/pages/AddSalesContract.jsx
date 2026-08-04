@@ -46,7 +46,7 @@ const AddSalesContract = () => {
     try {
       setLoadingOptions(true);
       const [buyersResult, propertiesResult] = await Promise.all([
-        supabase.from('buyers').select('*').order('full_name'),
+        supabase.from('buyers').select('id, property_id, full_name, name').order('full_name'),
         supabase.from('properties').select('id, title, code, custom_id, price, signal_value, installments_count, installment_value, first_installment_date, status').order('title'),
       ]);
 

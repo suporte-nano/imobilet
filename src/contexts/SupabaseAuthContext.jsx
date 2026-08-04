@@ -140,11 +140,11 @@ export const AuthProvider = ({ children }) => {
   }, [handleSession, clearSession]);
 
   const signup = useCallback(async (email, password, fullName) => {
-    logInfo(`Signup attempt started for email: ${email}`);
+    logInfo('Signup attempt started');
     setError(null);
     
     try {
-      logInfo(`Proceeding with signUp for: ${email}`);
+      logInfo('Proceeding with signUp');
       const signUpRes = await supabase.auth.signUp({
         email,
         password,
@@ -163,7 +163,7 @@ export const AuthProvider = ({ children }) => {
         return { data: null, error: signUpRes.error };
       }
 
-      logInfo(`Signup successful for: ${email}`);
+      logInfo('Signup successful');
       return { data: signUpRes.data, error: null };
 
     } catch (err) {
@@ -175,7 +175,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = useCallback(async (email, password) => {
-    logInfo(`Signin attempt started for email: ${email}`);
+    logInfo('Signin attempt started');
     setError(null);
     try {
       const { data, error: err } = await supabase.auth.signInWithPassword({
@@ -190,7 +190,7 @@ export const AuthProvider = ({ children }) => {
         return { data: null, error: err };
       }
 
-      logInfo(`Signin successful for: ${email}`);
+      logInfo('Signin successful');
       return { data, error: null };
     } catch (err) {
       logError(`Unexpected exception caught in login method`, err);
@@ -223,8 +223,7 @@ export const AuthProvider = ({ children }) => {
       // Log current state before clearing
       const hadSession = !!session;
       const hadUser = !!currentUser;
-      const userId = currentUser?.id || 'none';
-      logInfo(`Pre-clear state: Session=${hadSession}, User=${hadUser}, UserID=${userId}`);
+      logInfo(`Pre-clear state: Session=${hadSession}, User=${hadUser}`);
       
       // Clear all Supabase auth tokens from localStorage
       const clearedKeys = [];

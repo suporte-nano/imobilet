@@ -25,6 +25,7 @@ import { supabase } from '@/lib/customSupabaseClient';
 import { useToast } from '@/components/ui/use-toast';
 import {
   contractStatusLabels,
+  calculateInstallmentStatus,
   formatCurrency,
   formatDate,
   getInstallmentBadgeClass,
@@ -67,7 +68,7 @@ const ReceivableAccounts = () => {
         .select(`
           *,
           property:properties(id, title, code, custom_id, status, block, fraction),
-          buyer:buyers(id, full_name, name, email, phone),
+          buyer:buyers(id, full_name, name),
           installments(*),
           payments(*)
         `)
@@ -86,7 +87,7 @@ const ReceivableAccounts = () => {
 
       const { data: buyerData, error: buyerError } = await supabase
         .from('buyers')
-        .select('*')
+        .select('id, property_id')
         .limit(200);
 
       if (!buyerError) {
@@ -110,6 +111,12 @@ const ReceivableAccounts = () => {
   const installments = useMemo(() => contracts.flatMap((contract) => (
     (contract.installments || []).map((installment) => ({
       ...installment,
+      effective_status: calculateInstallmentStatus({
+        balance: installment.balance,
+        paidAmount: installment.paid_amount,
+        dueDate: installment.due_date,
+        currentStatus: installment.status,
+      }),
       contract,
       buyer: contract.buyer,
       property: contract.property,
@@ -127,7 +134,7 @@ const ReceivableAccounts = () => {
       const contractNumber = String(installment.contract?.contract_number || '').toLowerCase();
       const dueDate = installment.due_date ? new Date(`${installment.due_date}T12:00:00`) : null;
 
-      if (filters.status && installment.status !== filters.status) return false;
+      if (filters.status && installment.effective_status !== filters.status) return false;
       if (search && !buyerName.includes(search) && !propertyTitle.includes(search) && !contractNumber.includes(search)) return false;
       if (start && dueDate && dueDate < start) return false;
       if (end && dueDate && dueDate > end) return false;
@@ -139,8 +146,10 @@ const ReceivableAccounts = () => {
     const balance = Number(item.balance || 0);
     const paid = Number(item.paid_amount || 0);
 
-    if (!['paid', 'cancelled'].includes(item.status)) acc.open += balance;
-    if (item.status === 'overdue') {
+    const status = item.effective_status || item.status;
+
+    if (!['paid', 'cancelled'].includes(status)) acc.open += balance;
+    if (status === 'overdue') {
       acc.overdue += balance;
       acc.overdueCount += 1;
     }
@@ -344,8 +353,8 @@ const ReceivableAccounts = () => {
                         <td className="px-5 py-4 text-slate-700">{formatDate(item.due_date)}</td>
                         <td className="px-5 py-4 font-bold text-slate-950">{formatCurrency(item.balance)}</td>
                         <td className="px-5 py-4">
-                          <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${getInstallmentBadgeClass(item.status)}`}>
-                            {installmentStatusLabels[item.status] || item.status}
+                          <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${getInstallmentBadgeClass(item.effective_status)}`}>
+                            {installmentStatusLabels[item.effective_status] || item.effective_status}
                           </span>
                         </td>
                         <td className="px-5 py-4 text-right">
